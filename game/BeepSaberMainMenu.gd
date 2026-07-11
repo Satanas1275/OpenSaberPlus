@@ -38,6 +38,7 @@ const FAVORITE_MASK := 0x4000000000000000
 @onready var width_control := $Modifiers2/Claws/Small/Width as OptionButton
 @onready var speed_control := $Modifiers3/Flip/Speed as OptionButton
 @onready var favorite_button := $Favorite_Button as Button
+@onready var reset_button := $Reset_Button as Button
 
 @onready var song_preview := $song_prev as AudioStreamPlayer
 var song_preview_transition_time := 1.0
@@ -370,12 +371,8 @@ func _delete_map(map: MapInfo) -> void:
 			delete_button.disabled = true
 			favorite_button.hide()
 	_on_LoadPlaylists_Button_pressed()
-
-func _ready() -> void:
-	DirAccess.make_dir_recursive_absolute(Constants.APPDATA_PATH+"Backgrounds/")
-	DirAccess.make_dir_recursive_absolute(Constants.APPDATA_PATH+"Songs/")
-
-	Settings.changed.connect(on_settings_changed)
+	
+func _update_mod_controls() -> void:
 	health_control.button_pressed = Settings.health_mode
 	arrows_control.button_pressed = Settings.arrows_enabled
 	small_control.button_pressed = Settings.small
@@ -414,6 +411,14 @@ func _ready() -> void:
 	
 	bombs_control.button_pressed = Settings.bombs_enabled
 	claws_control.button_pressed = Settings.claws
+
+func _ready() -> void:
+	DirAccess.make_dir_recursive_absolute(Constants.APPDATA_PATH+"Backgrounds/")
+	DirAccess.make_dir_recursive_absolute(Constants.APPDATA_PATH+"Songs/")
+
+	Settings.changed.connect(on_settings_changed)
+	
+	_update_mod_controls()
 	favorite_button.hide()
 	
 	UI_AudioEngine.attach_children(self)
@@ -576,6 +581,7 @@ func update_view() -> void:
 		difficulty_changed.emit(_currently_selected_songlist_ref[current_selected], difficulty.difficulty_rank)
 	else:	
 		difficulty_changed.emit(null, -1)
+	_set_reset_icon()
 
 func _on_health_toggled(value: bool) -> void:
 	Settings.health_mode = value
@@ -592,6 +598,24 @@ func _on_bombs_toggled(value: bool) -> void:
 func _on_arrows_toggled(value: bool) -> void:
 	Settings.arrows_enabled = value
 	update_view()
+	
+func _are_mods_default() -> bool:
+	if Settings.health_mode or not Settings.bombs_enabled or not Settings.arrows_enabled:
+		return false
+	if Settings.claws or Settings.small:
+		return false
+	if Settings.width != 100 or Settings.flip != 0 or Settings.music_speed != 100:
+		return false
+	if Settings.handedness != 0:
+		return false
+	return true
+	
+func _set_reset_icon() -> void:
+	if _are_mods_default():
+		reset_button.hide()
+	else:
+		reset_button.text = "\u27F3" 
+		reset_button.show()
 
 func _set_favorite_icon(value: bool) -> void:
 	favorite_button.text = "\u2605" if value else "\u2606"
@@ -630,4 +654,17 @@ func _on_flip_item_selected(index: int) -> void:
 func _on_handedness_item_selected(index: int) -> void:
 	Settings.handedness = Constants.HANDEDNESSES[index][0]
 	update_view()
-	vr.log_warning("ARP handed "+str(Settings.handedness)+" "+str(index))
+
+func _on_reset_button_pressed() -> void:
+	Settings.health_mode = false
+	Settings.bombs_enabled = true
+	Settings.claws = false
+	Settings.small = false
+	Settings.width = 100 
+	Settings.flip = 0
+	Settings.music_speed = 100
+	Settings.handedness = 0
+	_update_mod_controls()
+	update_view()
+
+	pass # Replace with function body.

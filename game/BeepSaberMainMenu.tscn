@@ -453,6 +453,24 @@ theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_bhima")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_qax3j")
 text = "X"
 
+[node name="Reset_Button" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 1305.0
+offset_top = -315.0
+offset_right = 1360.0
+offset_bottom = -218.0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 75
+theme_override_styles/normal = SubResource("StyleBoxEmpty_3ptxp")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_qhkdt")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_kdryv")
+theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_bhima")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_qax3j")
+text = "X"
+
 [connection signal="toggled" from="Modifiers/Health" to="." method="_on_health_toggled"]
 [connection signal="toggled" from="Modifiers/Health/Bombs" to="." method="_on_bombs_toggled"]
 [connection signal="toggled" from="Modifiers/Health/Bombs/Arrows" to="." method="_on_arrows_toggled"]
@@ -474,3 +492,4 @@ text = "X"
 [connection signal="pressed" from="LoadPlaylists_Button" to="." method="_on_LoadPlaylists_Button_pressed"]
 [connection signal="timeout" from="song_prev/stop_prev" to="." method="_on_stop_prev_timeout"]
 [connection signal="pressed" from="Favorite_Button" to="." method="_on_favorite_button_pressed"]
+[connection signal="pressed" from="Reset_Button" to="." method="_on_reset_button_pressed"]
