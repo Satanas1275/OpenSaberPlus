@@ -9,14 +9,24 @@ func _ready(game: BeepSaber_Game) -> void:
 	game.pause_menu._hide()
 	game.highscore_canvas._hide()
 	game.name_selector_canvas._hide()
-	if Map.one_saber:
-		if Settings.left_handed:
-			game.right_saber._hide()
-			game.left_saber._show()
+	if Settings.handedness == 0:
+		if Map.one_saber:
+			if Settings.left_handed:
+				game.right_saber._hide()
+				game.left_saber._show()
+			else:
+				game.left_saber._hide()
+				game.right_saber._show()
 		else:
-			game.left_saber._hide()
 			game.right_saber._show()
-	else:
+			game.left_saber._show()
+	elif Settings.handedness == Constants.HANDEDNESS_FORCE_LEFT:
+		game.right_saber._hide()
+		game.left_saber._show()
+	elif Settings.handedness == Constants.HANDEDNESS_FORCE_RIGHT:
+		game.right_saber._show()
+		game.left_saber._hide()
+	elif Settings.handedness == Constants.HANDEDNESS_IGNORE:
 		game.right_saber._show()
 		game.left_saber._show()
 	game.multiplier_label.visible = true

@@ -143,7 +143,7 @@ func cut(saber: LightSaber, cut_speed: Vector3, cut_plane: Plane, controller: Be
 	var cut_distance := cut_plane.distance_to(global_transform.origin)
 	var distance_scale := 1./Constants.SMALL_SIZE if Settings.small else 1.
 	
-	if saber.type == which_saber or Map.one_saber:
+	if saber.type == which_saber or Map.one_saber or Settings.handedness != 0:
 		var cut_angle_accuracy := clampf((base_cut_angle_accuracy-0.7)/0.3, 0.0, 1.0)
 		if is_dot or not Settings.arrows_enabled: #ignore angle if is a dot
 			cut_angle_accuracy = 1.0

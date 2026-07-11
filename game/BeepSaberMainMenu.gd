@@ -31,11 +31,12 @@ const FAVORITE_MASK := 0x4000000000000000
 @onready var health_control := $Modifiers/Health as CheckButton
 @onready var bombs_control := $Modifiers/Health/Bombs as CheckButton
 @onready var arrows_control := $Modifiers/Health/Bombs/Arrows as CheckButton
-@onready var flip_control := $Modifiers/Health/Bombs/Arrows/Flip as OptionButton
+@onready var flip_control := $Modifiers3/Flip as OptionButton
+@onready var handedness_control := $Modifiers3/Flip/Speed/Handedness as OptionButton
 @onready var claws_control := $Modifiers2/Claws as CheckButton
 @onready var small_control := $Modifiers2/Claws/Small as Button
 @onready var width_control := $Modifiers2/Claws/Small/Width as OptionButton
-@onready var speed_control := $Modifiers2/Claws/Small/Width/Speed as OptionButton
+@onready var speed_control := $Modifiers3/Flip/Speed as OptionButton
 @onready var favorite_button := $Favorite_Button as Button
 
 @onready var song_preview := $song_prev as AudioStreamPlayer
@@ -387,6 +388,14 @@ func _ready() -> void:
 			index = i
 	flip_control.selected = index
 	
+	handedness_control.clear()
+	index = 0
+	for i in range(Constants.HANDEDNESSES.size()):
+		handedness_control.add_item(Constants.HANDEDNESSES[i][1])
+		if Constants.HANDEDNESSES[i][0] == Settings.handedness:
+			index = i
+	handedness_control.selected = index
+	
 	width_control.clear()
 	index = 0
 	for i in range(Constants.WIDTHS.size()):
@@ -617,3 +626,8 @@ func _on_speed_item_selected(index: int) -> void:
 func _on_flip_item_selected(index: int) -> void:
 	Settings.flip = Constants.FLIPS[index][0]
 	update_view()
+
+func _on_handedness_item_selected(index: int) -> void:
+	Settings.handedness = Constants.HANDEDNESSES[index][0]
+	update_view()
+	vr.log_warning("ARP handed "+str(Settings.handedness)+" "+str(index))

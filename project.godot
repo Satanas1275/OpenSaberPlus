@@ -49,6 +49,7 @@ gdscript/warnings/static_called_on_instance=0
 window/size/viewport_width=960
 window/size/viewport_height=540
 window/subwindows/embed_subwindows=false
+window/per_pixel_transparency/allowed=true
 window/vsync/vsync_mode=false
 
 [editor_plugins]

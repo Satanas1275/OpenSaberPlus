@@ -65,6 +65,13 @@ static func get_rank_key(diff_rank: int) -> int:
 			diff_rank |= Constants.SPEEDS[i][1]
 	diff_rank = diff_rank & ~Constants.DIFFICULTY_FLIP_MASK
 	diff_rank |= Settings.flip << Constants.DIFFICULTY_FLIP_SHIFT
+	diff_rank = diff_rank & ~Constants.DIFFICULTY_HANDEDNESS_MASK
+	if Settings.handedness == Constants.HANDEDNESS_FORCE_LEFT:
+		diff_rank |= Constants.DIFFICULTY_HANDEDNESS_FORCE_LEFT
+	elif Settings.handedness == Constants.HANDEDNESS_FORCE_RIGHT:
+		diff_rank |= Constants.DIFFICULTY_HANDEDNESS_FORCE_RIGHT
+	elif Settings.handedness == Constants.HANDEDNESS_IGNORE:
+		diff_rank |= Constants.DIFFICULTY_HANDEDNESS_IGNORE
 	return diff_rank
 	
 static func get_width_from_rank(diff_rank: int) -> int:

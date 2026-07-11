@@ -61,6 +61,10 @@ var flip: int:
 	set(value):
 		flip = value
 		set_and_emit(&"flip", value)
+var handedness: int:
+	set(value):
+		handedness = value
+		set_and_emit(&"handedness", value)
 var left_saber_offset_pos: Vector3:
 	set(value):
 		left_saber_offset_pos = value
@@ -238,6 +242,7 @@ var default_values = {
 	ui_volume = 10.0,
 	width = 100,
 	flip = 0,
+	handedness = 0,
 	left_saber_offset_pos = Vector3.ZERO,
 	left_saber_offset_rot = Vector3.ZERO,
 	right_saber_offset_pos = Vector3.ZERO,

@@ -15,8 +15,28 @@ static var arc_stack: Array[ArcInfo]
 static var chain_stack: Array[ChainInfo]
 static var event_stack: Array[EventInfo]
 
-static var color_left: Color
-static var color_right: Color
+static var _color_left: Color
+static var _color_right: Color
+static var color_left: Color :
+	get():
+		if Settings.handedness == Constants.HANDEDNESS_FORCE_RIGHT:
+			return _color_right
+		elif Settings.handedness == Constants.HANDEDNESS_IGNORE:
+			return (_color_left+_color_right)/2
+		else:
+			return _color_left
+	set(c):
+		_color_left = c
+static var color_right: Color :
+	get():
+		if Settings.handedness == Constants.HANDEDNESS_FORCE_LEFT:
+			return _color_left
+		elif Settings.handedness == Constants.HANDEDNESS_IGNORE:
+			return (_color_left+_color_right)/2
+		else:
+			return _color_right
+	set(c):
+		_color_right = c
 static var last_beat := 0.
 static var one_saber := false
 
