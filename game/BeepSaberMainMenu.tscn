@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://glii0poslcve"]
+[gd_scene format=3 uid="uid://glii0poslcve"]
 
 [ext_resource type="Theme" uid="uid://dvcjel72een6o" path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" id="1"]
 [ext_resource type="FontFile" uid="uid://cdsnr8tscm8y6" path="res://OQ_Toolkit/OQ_UI2D/theme/Roboto-Medium.ttf" id="2"]
@@ -53,6 +53,15 @@ fallbacks = Array[Font]([ExtResource("5"), ExtResource("5")])
 subpixel_positioning = 0
 msdf_pixel_range = 14
 msdf_size = 128
+cache/0/variation_coordinates = {}
+cache/0/face_index = 0
+cache/0/embolden = 0.0
+cache/0/transform = Transform2D(1, 0, 0, 1, 0, 0)
+cache/0/spacing_top = 0
+cache/0/spacing_bottom = 0
+cache/0/spacing_space = 0
+cache/0/spacing_glyph = 0
+cache/0/baseline_offset = 0.0
 cache/0/16/0/ascent = 0.0
 cache/0/16/0/descent = 0.0
 cache/0/16/0/underline_position = 0.0
@@ -71,6 +80,15 @@ fallbacks = Array[Font]([ExtResource("2"), ExtResource("2")])
 subpixel_positioning = 0
 msdf_pixel_range = 14
 msdf_size = 128
+cache/0/variation_coordinates = {}
+cache/0/face_index = 0
+cache/0/embolden = 0.0
+cache/0/transform = Transform2D(1, 0, 0, 1, 0, 0)
+cache/0/spacing_top = 0
+cache/0/spacing_bottom = 0
+cache/0/spacing_space = 0
+cache/0/spacing_glyph = 0
+cache/0/baseline_offset = 0.0
 cache/0/16/0/ascent = 0.0
 cache/0/16/0/descent = 0.0
 cache/0/16/0/underline_position = 0.0
@@ -83,6 +101,15 @@ fallbacks = Array[Font]([ExtResource("5"), ExtResource("5")])
 subpixel_positioning = 0
 msdf_pixel_range = 14
 msdf_size = 128
+cache/0/variation_coordinates = {}
+cache/0/face_index = 0
+cache/0/embolden = 0.0
+cache/0/transform = Transform2D(1, 0, 0, 1, 0, 0)
+cache/0/spacing_top = 0
+cache/0/spacing_bottom = 0
+cache/0/spacing_space = 0
+cache/0/spacing_glyph = 0
+cache/0/baseline_offset = 0.0
 cache/0/16/0/ascent = 0.0
 cache/0/16/0/descent = 0.0
 cache/0/16/0/underline_position = 0.0
@@ -116,61 +143,61 @@ default_font_size = 20
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_qax3j"]
 
-[node name="BeepSaberMainMenu" type="Panel"]
+[node name="BeepSaberMainMenu" type="Panel" unique_id=1329467298]
 offset_right = 1408.0
 offset_bottom = 640.0
 theme = ExtResource("1")
 theme_override_styles/panel = SubResource("1")
 script = ExtResource("3")
 
-[node name="Modifiers" type="Panel" parent="."]
+[node name="Modifiers" type="Panel" parent="." unique_id=326845635]
 layout_mode = 0
 offset_left = 863.0
 offset_top = 343.0
 offset_right = 993.0
 offset_bottom = 424.0
 
-[node name="Health" type="CheckButton" parent="Modifiers"]
+[node name="Health" type="CheckButton" parent="Modifiers" unique_id=873354398]
 layout_mode = 0
 offset_right = 95.0
 offset_bottom = 27.0
 text = "Health"
 
-[node name="Bombs" type="CheckButton" parent="Modifiers/Health"]
+[node name="Bombs" type="CheckButton" parent="Modifiers/Health" unique_id=232093017]
 layout_mode = 0
 offset_top = 27.0
 offset_right = 99.0
 offset_bottom = 54.0
 text = "Bombs"
 
-[node name="Arrows" type="CheckButton" parent="Modifiers/Health/Bombs"]
+[node name="Arrows" type="CheckButton" parent="Modifiers/Health/Bombs" unique_id=2103954553]
 layout_mode = 0
 offset_top = 27.0
 offset_right = 99.0
 offset_bottom = 54.0
 text = "Arrows"
 
-[node name="Modifiers2" type="Panel" parent="."]
+[node name="Modifiers2" type="Panel" parent="." unique_id=2025656734]
 layout_mode = 0
 offset_left = 1000.0
 offset_top = 343.0
 offset_right = 1140.0
 offset_bottom = 424.0
 
-[node name="Claws" type="CheckButton" parent="Modifiers2"]
+[node name="Claws" type="CheckButton" parent="Modifiers2" unique_id=419381851]
 layout_mode = 0
 offset_right = 137.0
 offset_bottom = 27.0
 text = "Short Sword"
 
-[node name="Small" type="CheckButton" parent="Modifiers2/Claws"]
+[node name="Small" type="CheckButton" parent="Modifiers2/Claws" unique_id=488757344]
 layout_mode = 0
 offset_top = 27.0
 offset_right = 117.0
 offset_bottom = 54.0
 text = "Mini Blocks"
 
-[node name="Width" type="OptionButton" parent="Modifiers2/Claws/Small"]
+[node name="Width" type="OptionButton" parent="Modifiers2/Claws/Small" unique_id=593606118]
 layout_mode = 0
 offset_top = 27.0
 offset_right = 103.0
@@ -185,14 +212,14 @@ popup/item_2/id = 2
 popup/item_3/text = "Stretch 175%"
 popup/item_3/id = 3
 
-[node name="Modifiers3" type="Panel" parent="."]
+[node name="Modifiers3" type="Panel" parent="." unique_id=314187827]
 layout_mode = 0
 offset_left = 1137.0
 offset_top = 343.0
 offset_right = 1277.0
 offset_bottom = 424.0
 
-[node name="Flip" type="OptionButton" parent="Modifiers3"]
+[node name="Flip" type="OptionButton" parent="Modifiers3" unique_id=376088449]
 layout_mode = 0
 offset_right = 127.0
 offset_bottom = 27.0
@@ -206,7 +233,7 @@ popup/item_2/id = 2
 popup/item_3/text = "Stretch 175%"
 popup/item_3/id = 3
 
-[node name="Speed" type="OptionButton" parent="Modifiers3/Flip"]
+[node name="Speed" type="OptionButton" parent="Modifiers3/Flip" unique_id=1987793820]
 layout_mode = 0
 offset_top = 27.0
 offset_right = 127.0
@@ -221,7 +248,7 @@ popup/item_2/id = 2
 popup/item_3/text = "Stretch 175%"
 popup/item_3/id = 3
 
-[node name="Handedness" type="OptionButton" parent="Modifiers3/Flip/Speed"]
+[node name="Handedness" type="OptionButton" parent="Modifiers3/Flip/Speed" unique_id=1664220508]
 layout_mode = 0
 offset_top = 27.0
 offset_right = 127.0
@@ -236,7 +263,7 @@ popup/item_2/id = 2
 popup/item_3/text = "Stretch 175%"
 popup/item_3/id = 3
 
-[node name="Play_Button" type="Button" parent="."]
+[node name="Play_Button" type="Button" parent="." unique_id=1531123587]
 layout_mode = 0
 offset_left = 293.0
 offset_top = 576.0
@@ -247,7 +274,7 @@ theme_override_styles/pressed = SubResource("3")
 theme_override_styles/hover = SubResource("2")
 text = "Play!"
 
-[node name="Delete_Button" type="Button" parent="."]
+[node name="Delete_Button" type="Button" parent="." unique_id=1222545396]
 layout_mode = 0
 offset_left = 864.0
 offset_top = 521.0
@@ -260,7 +287,7 @@ theme_override_styles/disabled = SubResource("5")
 disabled = true
 text = "Delete"
 
-[node name="Exit_Button" type="Button" parent="."]
+[node name="Exit_Button" type="Button" parent="." unique_id=1669148104]
 layout_mode = 0
 offset_left = 1265.0
 offset_top = 576.0
@@ -271,7 +298,7 @@ theme_override_styles/pressed = SubResource("3")
 theme_override_styles/hover = SubResource("2")
 text = "Exit"
 
-[node name="Settings_Button" type="Button" parent="."]
+[node name="Settings_Button" type="Button" parent="." unique_id=1976522914]
 layout_mode = 0
 offset_left = 1265.0
 offset_top = 520.0
@@ -282,7 +309,7 @@ theme_override_styles/pressed = SubResource("3")
 theme_override_styles/hover = SubResource("2")
 text = "Settings"
 
-[node name="Licenses" type="Button" parent="."]
+[node name="Licenses" type="Button" parent="." unique_id=980969105]
 layout_mode = 0
 offset_left = 1265.0
 offset_top = 464.0
@@ -293,7 +320,7 @@ theme_override_styles/pressed = SubResource("3")
 theme_override_styles/hover = SubResource("2")
 text = "Licenses"
 
-[node name="Search_Button" type="Button" parent="."]
+[node name="Search_Button" type="Button" parent="." unique_id=891455992]
 layout_mode = 0
 offset_left = 19.0
 offset_top = 13.0
@@ -305,14 +332,14 @@ theme_override_styles/pressed = SubResource("3")
 theme_override_styles/hover = SubResource("2")
 text = "Search"
 
-[node name="Label" type="Label" parent="Search_Button"]
+[node name="Label" type="Label" parent="Search_Button" unique_id=626122024]
 layout_mode = 0
 offset_left = 117.0
 offset_top = 3.0
 offset_right = 167.0
 offset_bottom = 36.0
 
-[node name="cover" type="TextureRect" parent="."]
+[node name="cover" type="TextureRect" parent="." unique_id=925358881]
 layout_mode = 0
 offset_left = 1138.0039
 offset_top = 84.0
@@ -322,7 +349,7 @@ texture = ExtResource("3_wpmn0")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="SongInfo_Label" type="Label" parent="."]
+[node name="SongInfo_Label" type="Label" parent="." unique_id=347010549]
 layout_mode = 0
 offset_left = 861.0
 offset_top = 427.0
@@ -333,7 +360,7 @@ Song Title: Time Lapse
 Beatmap Author: Timeweaver
 Play Count: 10"
 
-[node name="SongsMenu" type="ItemList" parent="."]
+[node name="SongsMenu" type="ItemList" parent="." unique_id=1448329630]
 layout_mode = 0
 offset_left = 16.0
 offset_top = 64.0
@@ -343,7 +370,7 @@ theme = SubResource("7")
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 fixed_icon_size = Vector2i(60, 60)
 
-[node name="PlaylistSelector" type="OptionButton" parent="."]
+[node name="PlaylistSelector" type="OptionButton" parent="." unique_id=301008456]
 layout_mode = 0
 offset_left = 639.0
 offset_top = 12.0
@@ -353,7 +380,7 @@ theme = SubResource("9")
 theme_override_fonts/font = SubResource("10")
 flat = true
 
-[node name="DifficultyMenu" type="ItemList" parent="."]
+[node name="DifficultyMenu" type="ItemList" parent="." unique_id=1422990200]
 layout_mode = 0
 offset_left = 864.0
 offset_top = 20.0
@@ -362,7 +389,7 @@ offset_bottom = 334.0
 theme = SubResource("12")
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 
-[node name="LoadPlaylists_Button" type="Button" parent="."]
+[node name="LoadPlaylists_Button" type="Button" parent="." unique_id=793107135]
 layout_mode = 0
 offset_left = 16.0
 offset_top = 576.0
@@ -373,7 +400,7 @@ theme_override_styles/pressed = SubResource("3")
 theme_override_styles/hover = SubResource("2")
 text = "Refresh Songs/Playlists"
 
-[node name="upload_url" type="Label" parent="."]
+[node name="upload_url" type="Label" parent="." unique_id=1379669192]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -390,20 +417,20 @@ theme_override_font_sizes/font_size = 21
 text = "Manually Upload Custom Songs: 
 asdasdasd"
 
-[node name="song_prev" type="AudioStreamPlayer" parent="."]
+[node name="song_prev" type="AudioStreamPlayer" parent="." unique_id=1250199406]
 volume_db = -60.0
 bus = &"MusicPreview"
 
-[node name="stop_prev" type="Timer" parent="song_prev"]
+[node name="stop_prev" type="Timer" parent="song_prev" unique_id=198072639]
 one_shot = true
 
-[node name="song_vr_slider" parent="." instance=ExtResource("6")]
+[node name="song_vr_slider" parent="." unique_id=485485119 instance=ExtResource("6")]
 scroll_node_path = NodePath("../SongsMenu")
 
-[node name="diff_vr_slider" parent="." instance=ExtResource("6")]
+[node name="diff_vr_slider" parent="." unique_id=803757760 instance=ExtResource("6")]
 scroll_node_path = NodePath("../DifficultyMenu")
 
-[node name="version" type="Label" parent="."]
+[node name="version" type="Label" parent="." unique_id=537676885]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -418,24 +445,24 @@ grow_horizontal = 0
 grow_vertical = 0
 text = "0.4.1"
 
-[node name="LicensePopup" type="PopupPanel" parent="."]
+[node name="LicensePopup" type="PopupPanel" parent="." unique_id=1997437673]
 title = "Licenses"
 position = Vector2i(1090, 20)
 size = Vector2i(302, 400)
 theme_override_styles/panel = SubResource("StyleBoxFlat_t5flx")
 
-[node name="ScrollContainer" type="ScrollContainer" parent="LicensePopup"]
+[node name="ScrollContainer" type="ScrollContainer" parent="LicensePopup" unique_id=1670075562]
 offset_right = 302.0
 offset_bottom = 400.0
 horizontal_scroll_mode = 0
 
-[node name="Label" type="Label" parent="LicensePopup/ScrollContainer"]
+[node name="Label" type="Label" parent="LicensePopup/ScrollContainer" unique_id=1044749430]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "LICENSES"
 autowrap_mode = 2
 
-[node name="Favorite_Button" type="Button" parent="."]
+[node name="Favorite_Button" type="Button" parent="." unique_id=1448413959]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
@@ -453,7 +480,7 @@ theme_override_styles/hover_pressed = SubResource("StyleBoxEmpty_bhima")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_qax3j")
 text = "X"
 
-[node name="Reset_Button" type="Button" parent="."]
+[node name="Reset_Button" type="Button" parent="." unique_id=1815398217]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0

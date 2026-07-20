@@ -8,13 +8,17 @@
 
 config_version=5
 
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+
 [application]
 
 config/name="Open Saber"
 run/main_scene="res://game/BeepSaber_Game.tscn"
-config/features=PackedStringArray("4.5")
+config/features=PackedStringArray("4.6")
 boot_splash/bg_color=Color(0, 0, 0, 0)
-boot_splash/image="res://game/data/beepsaber_logo.png"
+boot_splash/image="uid://cviyxvrpvyr0g"
 config/icon="res://icon.png"
 
 [audio]
@@ -173,6 +177,7 @@ right_saber={
 
 openxr/enabled=true
 openxr/reference_space=2
+openxr/environment_blend_mode=0
 openxr/startup_alert=false
 openxr/extensions/hand_tracking=true
 shaders/enabled=true

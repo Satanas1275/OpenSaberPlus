@@ -2,16 +2,19 @@ extends Node
 
 var floor_albedo_texture : Texture2D = null
 	
-	
-func set_mixed_reality():
+func set_mixed_reality(mr: bool):
 	var xr_interface := XRServer.find_interface("OpenXR") as XRInterface
 	if xr_interface and xr_interface.is_passthrough_supported():
-		if Settings.mixed_reality:
+		if mr:
 			if xr_interface.start_passthrough():
 				get_viewport().transparent_bg = true
+				xr_interface.environment_blend_mode = XRInterface.XR_ENV_BLEND_MODE_ALPHA_BLEND
+				print("BeepSaber: MR")
 		else:
 			xr_interface.stop_passthrough()
 			get_viewport().transparent_bg = false
+			xr_interface.environment_blend_mode = XRInterface.XR_ENV_BLEND_MODE_OPAQUE
+			
 			
 	var cut_floor := get_node("/root/BeepSaber/StandingGround/Node3D/cutFloor") as MeshInstance3D
 	var material := cut_floor.material_override as StandardMaterial3D
@@ -19,7 +22,7 @@ func set_mixed_reality():
 	if floor_albedo_texture == null:
 		floor_albedo_texture = material.albedo_texture
 
-	if Settings.mixed_reality:
+	if mr:
 		material.transparency = 1
 		material.albedo_texture = null
 		material.albedo_color = Color(0,0,0,.6)

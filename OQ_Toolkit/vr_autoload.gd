@@ -214,7 +214,7 @@ func initialize(origin: XROrigin3D, camera: XRCamera3D, left_hand: BeepSaberCont
 		# Change our main viewport to output to the HMD
 		get_viewport().use_xr = true
 		inVR = true
-		MixedReality.set_mixed_reality()
+		MixedReality.set_mixed_reality(Settings.mixed_reality)
 
 	else:
 		log_info("OpenXR not initialized, please check if your headset is connected")
