@@ -77,8 +77,8 @@ func spawn(chain_info: ChainInfo, current_beat: float, head_pos: Vector2, tail_p
 	var q1 := mid_pos.lerp(tail_pos, lerp_factor)
 	var bezier_pos := q0.lerp(q1, lerp_factor)
 	
-	if Settings.small:
-		scale = Vector3(Constants.SMALL_SIZE,Constants.SMALL_SIZE,Constants.SMALL_SIZE)
+	# TODO: USE THIS
+	#scale = Vector3(Settings.block_size,Settings.block_size,Settings.block_size)/100.
 	
 	transform.origin.x = bezier_pos.x
 	transform.origin.y = bezier_pos.y

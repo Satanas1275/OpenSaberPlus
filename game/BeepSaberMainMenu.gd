@@ -34,8 +34,8 @@ const FAVORITE_MASK := 0x4000000000000000
 @onready var flip_control := $Modifiers3/Flip as OptionButton
 @onready var handedness_control := $Modifiers3/Flip/Speed/Handedness as OptionButton
 @onready var claws_control := $Modifiers2/Claws as CheckButton
-@onready var small_control := $Modifiers2/Claws/Small as Button
-@onready var width_control := $Modifiers2/Claws/Small/Width as OptionButton
+@onready var size_control := $Modifiers2/Claws/Size as OptionButton
+@onready var width_control := $Modifiers2/Claws/Size/Width as OptionButton
 @onready var speed_control := $Modifiers3/Flip/Speed as OptionButton
 @onready var favorite_button := $Favorite_Button as Button
 @onready var reset_button := $Reset_Button as Button
@@ -372,42 +372,24 @@ func _delete_map(map: MapInfo) -> void:
 			favorite_button.hide()
 	_on_LoadPlaylists_Button_pressed()
 	
+func _drop_down(control: OptionButton, list: Array, value: Variant, defaultIndex: int) -> void:
+	control.clear()
+	var index := defaultIndex
+	for i in range(list.size()):
+		control.add_item(list[i][1])
+		if list[i][0] == value:
+			index = i
+	control.selected = index
+	
 func _update_mod_controls() -> void:
 	health_control.button_pressed = Settings.health_mode
 	arrows_control.button_pressed = Settings.arrows_enabled
-	small_control.button_pressed = Settings.small
 	
-	flip_control.clear()
-	var index := 0
-	for i in range(Constants.FLIPS.size()):
-		flip_control.add_item(Constants.FLIPS[i][1])
-		if Constants.FLIPS[i][0] == Settings.flip:
-			index = i
-	flip_control.selected = index
-	
-	handedness_control.clear()
-	index = 0
-	for i in range(Constants.HANDEDNESSES.size()):
-		handedness_control.add_item(Constants.HANDEDNESSES[i][1])
-		if Constants.HANDEDNESSES[i][0] == Settings.handedness:
-			index = i
-	handedness_control.selected = index
-	
-	width_control.clear()
-	index = 0
-	for i in range(Constants.WIDTHS.size()):
-		width_control.add_item("Stretch %d%%" % Constants.WIDTHS[i][0])
-		if Constants.WIDTHS[i][0] == Settings.width:
-			index = i
-	width_control.selected = index
-	
-	speed_control.clear()
-	index = 1
-	for i in range(Constants.WIDTHS.size()):
-		speed_control.add_item("Speed %d%%" % Constants.SPEEDS[i][0])
-		if Constants.SPEEDS[i][0] == Settings.music_speed:
-			index = i
-	speed_control.selected = index
+	_drop_down(flip_control, Constants.FLIPS, Settings.flip, 0)
+	_drop_down(handedness_control, Constants.HANDEDNESSES, Settings.handedness, 0)
+	_drop_down(width_control, Constants.WIDTHS, Settings.width, 0)
+	_drop_down(size_control, Constants.SIZES, Settings.block_size, 1)
+	_drop_down(speed_control, Constants.SPEEDS, Settings.music_speed, 1)
 	
 	bombs_control.button_pressed = Settings.bombs_enabled
 	claws_control.button_pressed = Settings.claws
@@ -602,7 +584,7 @@ func _on_arrows_toggled(value: bool) -> void:
 func _are_mods_default() -> bool:
 	if Settings.health_mode or not Settings.bombs_enabled or not Settings.arrows_enabled:
 		return false
-	if Settings.claws or Settings.small:
+	if Settings.claws or Settings.block_size != 100:
 		return false
 	if Settings.width != 100 or Settings.flip != 0 or Settings.music_speed != 100:
 		return false
@@ -614,7 +596,7 @@ func _set_reset_icon() -> void:
 	if _are_mods_default():
 		reset_button.hide()
 	else:
-		reset_button.text = "\u27F3" 
+		reset_button.text = "\u21BA" 
 		reset_button.show()
 
 func _set_favorite_icon(value: bool) -> void:
@@ -643,6 +625,10 @@ func _on_width_item_selected(index: int) -> void:
 	Settings.width = Constants.WIDTHS[index][0]
 	update_view()
 
+func _on_size_item_selected(index: int) -> void:
+	Settings.block_size = Constants.SIZES[index][0]
+	update_view()
+
 func _on_speed_item_selected(index: int) -> void:
 	Settings.music_speed = Constants.SPEEDS[index][0]
 	update_view()
@@ -659,7 +645,7 @@ func _on_reset_button_pressed() -> void:
 	Settings.health_mode = false
 	Settings.bombs_enabled = true
 	Settings.claws = false
-	Settings.small = false
+	Settings.block_size = 100
 	Settings.width = 100 
 	Settings.flip = 0
 	Settings.music_speed = 100

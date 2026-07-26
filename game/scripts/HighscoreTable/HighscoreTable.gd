@@ -58,11 +58,11 @@ static func get_rank_key(diff_rank: int) -> int:
 	diff_rank = diff_rank & ~Constants.DIFFICULTY_WIDTH_MASK
 	for i in range(Constants.WIDTHS.size()):
 		if Settings.width == Constants.WIDTHS[i][0]:
-			diff_rank |= Constants.WIDTHS[i][1]
+			diff_rank |= Constants.WIDTHS[i][2]
 	diff_rank = diff_rank & ~Constants.DIFFICULTY_SPEED_MASK
 	for i in range(Constants.SPEEDS.size()):
 		if Settings.music_speed == Constants.SPEEDS[i][0]:
-			diff_rank |= Constants.SPEEDS[i][1]
+			diff_rank |= Constants.SPEEDS[i][2]
 	diff_rank = diff_rank & ~Constants.DIFFICULTY_FLIP_MASK
 	diff_rank |= Settings.flip << Constants.DIFFICULTY_FLIP_SHIFT
 	diff_rank = diff_rank & ~Constants.DIFFICULTY_HANDEDNESS_MASK
@@ -77,14 +77,14 @@ static func get_rank_key(diff_rank: int) -> int:
 static func get_width_from_rank(diff_rank: int) -> int:
 	var wr := diff_rank & Constants.DIFFICULTY_WIDTH_MASK
 	for ww in Constants.WIDTHS:
-		if ww[1] == wr:
+		if ww[2] == wr:
 			return ww[0]
 	return 100
 	
 static func get_speed_from_rank(diff_rank: int) -> int:
 	var sr := diff_rank & Constants.DIFFICULTY_SPEED_MASK
 	for ss in Constants.SPEEDS:
-		if ss[1] == sr:
+		if ss[2] == sr:
 			return ss[0]
 	return 100
 	

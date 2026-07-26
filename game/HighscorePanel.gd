@@ -63,7 +63,9 @@ func _get_difficulty_name(map_info: MapInfo, diff_rank: int) -> String:
 	var game_type := ( ("Health" if (diff_rank & Constants.DIFFICULTY_HEALTH) != 0 else "No Health") +
 					 ("" if (diff_rank & Constants.DIFFICULTY_BOMBS) != 0 else ", No Bombs") + 
 					 ("" if (diff_rank & Constants.DIFFICULTY_ARROWS) != 0 else ", No Arrows") +
-					 (", Small" if (diff_rank & Constants.DIFFICULTY_SMALL) != 0 else "") +
+					 (", Small" if ((diff_rank & Constants.DIFFICULTY_BLOCK_SIZE_MASK) == Constants.DIFFICULTY_BLOCK_SIZE_SMALL) else "") + 
+					 (", Big" if ((diff_rank & Constants.DIFFICULTY_BLOCK_SIZE_MASK) == Constants.DIFFICULTY_BLOCK_SIZE_BIG) else "") + 
+					 (", Giant" if ((diff_rank & Constants.DIFFICULTY_BLOCK_SIZE_MASK) == Constants.DIFFICULTY_BLOCK_SIZE_GIANT) else "") + 
 					 (", Short Sword" if (diff_rank & Constants.DIFFICULTY_CLAWS) != 0 else "") +
 					 ((", Stretch %d%% " % width) if (width != 100) else "") +
 					 ((", Speed %d%% " % speed) if (speed != 100) else "") +

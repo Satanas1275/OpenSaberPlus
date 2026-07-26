@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://glii0poslcve"]
 
-[ext_resource type="Theme" uid="uid://dvcjel72een6o" path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" id="1"]
+[ext_resource type="Theme" uid="uid://dvcjel72een6o" path="res://u/assets/OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard.theme" id="1"]
 [ext_resource type="FontFile" uid="uid://cdsnr8tscm8y6" path="res://OQ_Toolkit/OQ_UI2D/theme/Roboto-Medium.ttf" id="2"]
 [ext_resource type="Script" uid="uid://cbe53qn50sjl7" path="res://game/BeepSaberMainMenu.gd" id="3"]
-[ext_resource type="Texture2D" uid="uid://cviyxvrpvyr0g" path="res://game/data/beepsaber_logo.png" id="3_wpmn0"]
+[ext_resource type="Texture2D" uid="uid://cviyxvrpvyr0g" path="res://u/assets/game/data/beepsaber_logo.png" id="3_wpmn0"]
 [ext_resource type="FontFile" uid="uid://01k27lk2a4bw" path="res://OQ_Toolkit/OQ_UI2D/theme/RobotoMono-Medium.ttf" id="5"]
 [ext_resource type="PackedScene" uid="uid://dtipmx5ep1dkk" path="res://game/vr_slider.tscn" id="6"]
 [ext_resource type="FontVariation" uid="uid://ckoe517v8p3qp" path="res://OQ_Toolkit/OQ_UI2D/theme/oq_ui2d_standard_font.tres" id="7"]
@@ -190,17 +190,25 @@ offset_right = 137.0
 offset_bottom = 27.0
 text = "Short Sword"
 
-[node name="Small" type="CheckButton" parent="Modifiers2/Claws" unique_id=488757344]
+[node name="Size" type="OptionButton" parent="Modifiers2/Claws" unique_id=496871731]
 layout_mode = 0
 offset_top = 27.0
-offset_right = 117.0
+offset_right = 127.0
 offset_bottom = 54.0
-text = "Mini Blocks"
+item_count = 4
+popup/item_0/text = "Stretch 100%"
+popup/item_0/id = 0
+popup/item_1/text = "Stretch 125%"
+popup/item_1/id = 1
+popup/item_2/text = "Stretch 150%"
+popup/item_2/id = 2
+popup/item_3/text = "Stretch 175%"
+popup/item_3/id = 3
 
-[node name="Width" type="OptionButton" parent="Modifiers2/Claws/Small" unique_id=593606118]
+[node name="Width" type="OptionButton" parent="Modifiers2/Claws/Size" unique_id=593606118]
 layout_mode = 0
 offset_top = 27.0
-offset_right = 103.0
+offset_right = 127.0
 offset_bottom = 54.0
 item_count = 4
 popup/item_0/text = "Stretch 100%"
@@ -502,8 +510,8 @@ text = "X"
 [connection signal="toggled" from="Modifiers/Health/Bombs" to="." method="_on_bombs_toggled"]
 [connection signal="toggled" from="Modifiers/Health/Bombs/Arrows" to="." method="_on_arrows_toggled"]
 [connection signal="toggled" from="Modifiers2/Claws" to="." method="_on_claws_toggled"]
-[connection signal="toggled" from="Modifiers2/Claws/Small" to="." method="_on_small_toggled"]
-[connection signal="item_selected" from="Modifiers2/Claws/Small/Width" to="." method="_on_width_item_selected"]
+[connection signal="item_selected" from="Modifiers2/Claws/Size" to="." method="_on_size_item_selected"]
+[connection signal="item_selected" from="Modifiers2/Claws/Size/Width" to="." method="_on_width_item_selected"]
 [connection signal="item_selected" from="Modifiers3/Flip" to="." method="_on_flip_item_selected"]
 [connection signal="item_selected" from="Modifiers3/Flip/Speed" to="." method="_on_speed_item_selected"]
 [connection signal="item_selected" from="Modifiers3/Flip/Speed/Handedness" to="." method="_on_handedness_item_selected"]

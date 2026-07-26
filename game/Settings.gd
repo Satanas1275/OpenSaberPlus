@@ -188,10 +188,10 @@ var arrows_enabled: bool:
 	set(value):
 		arrows_enabled = value
 		set_and_emit(&"arrows_enabled", value)
-var small: bool:
+var block_size: int:
 	set(value):
-		small = value
-		set_and_emit(&"small", value)
+		block_size = value
+		set_and_emit(&"block_size", value)
 var last_map: String:
 	set(value):
 		last_map = value
@@ -260,7 +260,7 @@ var default_values = {
 	background_texture = "res://game/data/background/nightsky.jpg",
 	health_mode = false,
 	arrows_enabled = true,
-	small = false,
+	block_size = 100,
 	last_map = "",
 	claws = false
 }

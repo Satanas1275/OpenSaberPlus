@@ -53,10 +53,7 @@ func spawn(note_info: ColorNoteInfo, current_beat: float) -> void:
 	else:
 		(collision_big.shape as BoxShape3D).size.y = 0.5
 		
-	if Settings.small:
-		scale = Vector3(Constants.SMALL_SIZE,Constants.SMALL_SIZE,Constants.SMALL_SIZE)
-	else:
-		scale = Vector3(1,1,1)
+	scale = Vector3(Settings.block_size/100.,Settings.block_size/100.,Settings.block_size/100.)
 	transform.origin.x = Settings.LANE_DISTANCE_X * float(note_info.line_index) + Settings.LANE_ZERO_X
 	transform.origin.y = Constants.LANE_DISTANCE_Y * float(note_info.line_layer) + Constants.LAYER_ZERO_Y
 	transform.origin.z = -(note_info.beat - current_beat) * Constants.BEAT_DISTANCE
@@ -141,7 +138,7 @@ func cut(saber: LightSaber, cut_speed: Vector3, cut_plane: Plane, controller: Be
 	var cut_direction_xy := -Vector3(cut_speed.x, cut_speed.y, 0.0).normalized()
 	var base_cut_angle_accuracy := global_transform.basis.orthonormalized().y.dot(cut_direction_xy)
 	var cut_distance := cut_plane.distance_to(global_transform.origin)
-	var distance_scale := 1./Constants.SMALL_SIZE if Settings.small else 1.
+	var distance_scale := 100./Settings.block_size
 	
 	if saber.type == which_saber or Map.one_saber or Settings.handedness != 0:
 		var cut_angle_accuracy := clampf((base_cut_angle_accuracy-0.7)/0.3, 0.0, 1.0)
@@ -171,12 +168,8 @@ func cut(saber: LightSaber, cut_speed: Vector3, cut_plane: Plane, controller: Be
 # cut the cube by creating two rigid bodies and using a CSGBox to create
 # the cut plane
 func _start_cut_pieces(cutplane: Plane) -> void:
-	if Settings.small:
-		piece_left.scale = Vector3(Constants.SMALL_SIZE,Constants.SMALL_SIZE,Constants.SMALL_SIZE)
-		piece_right.scale = Vector3(Constants.SMALL_SIZE,Constants.SMALL_SIZE,Constants.SMALL_SIZE)
-	else:
-		piece_left.scale = Vector3(1,1,1)
-		piece_right.scale = Vector3(1,1,1)
+	piece_left.scale = Vector3(Settings.block_size,Settings.block_size,Settings.block_size)/100.
+	piece_right.scale = Vector3(Settings.block_size,Settings.block_size,Settings.block_size)/100.
 	piece_left.global_transform = global_transform
 	piece_right.global_transform = global_transform
 	
@@ -186,7 +179,7 @@ func _start_cut_pieces(cutplane: Plane) -> void:
 	_piece_death_count = 0
 
 	var p := cutplane # ARP: fix rot global_transform * 
-	piece_left.start_cut_plane(-p.normal, -p.d)
+	piece_left.start_cut_plane(-p.normal, -p.d) # ARP: scale p.d for block size?
 	piece_right.start_cut_plane(p.normal, p.d)
 	
 	# some impulse so the cube half moves
