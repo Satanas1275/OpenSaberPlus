@@ -23,6 +23,9 @@ signal changed(name: StringName)
 var LANE_DISTANCE_X := Constants.DEFAULT_LANE_DISTANCE_X
 var LANE_ZERO_X := Constants.DEFAULT_LANE_ZERO_X
 
+var preloaded_songs: bool:
+	set(value):
+		preloaded_songs = value
 var thickness: float:
 	set(value):
 		thickness = value
@@ -262,7 +265,8 @@ var default_values = {
 	arrows_enabled = true,
 	block_size = 100,
 	last_map = "",
-	claws = false
+	claws = false,
+	preloaded_songs = false
 }
 
 func cast_or_default(key: String, to_type: int = -1) -> Variant:

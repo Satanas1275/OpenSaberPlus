@@ -141,7 +141,7 @@ func _sort_songs() -> void:
 func _load_playlists() -> void:
 	#copy sample songs to main playlist folder on first run
 	current_selected = -1
-	if not FileAccess.file_exists(Settings.CONFIG_PATH):
+	if not Settings.preloaded_songs:
 		@warning_ignore("return_value_discarded")
 		const maps_path := "res://game/data/maps/"
 		var dir := DirAccess.open(maps_path + "Songs/")
@@ -163,6 +163,7 @@ func _load_playlists() -> void:
 					dir.copy(copy_new_dir,Constants.APPDATA_PATH+"Songs/"+file_name+"/"+copy_file_name)
 					copy_file_name = copy.get_next()
 			file_name = dir.get_next()
+		Settings.preloaded_songs = true
 	
 	_discover_all_songs(Constants.APPDATA_PATH+"Songs/")
 	
