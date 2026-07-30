@@ -24,9 +24,7 @@
         android:hasFragileUserData="false"
         android:requestLegacyExternalStorage="false"
         tools:ignore="GoogleAppIndexingWarning" >
-        
-        <meta-data android:name="com.oculus.ossplash.background" android:value="passthrough-contextual"/>
-        
+         <meta-data android:name="com.oculus.ossplash.background" android:value="passthrough-contextual"/>
         <profileable
             android:shell="true"
             android:enabled="true"

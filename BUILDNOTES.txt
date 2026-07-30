@@ -1,8 +1,4 @@
-Tested with Godot 4.5.1.
+Works with Godot 4.6 and the v4 version of the XR Vendors file.
 
-Get a godotopenxrvendors.zip file for Godot 4.4 or later from:
-  https://github.com/GodotVR/godot_openxr_vendors/releases
-  
-Put the asset/addons/godotopenxrvendors folder from the zip in your BeepSaber/addons folder.
-
-Do Project | Install Android build template
+In Godot, do Project > Install Android build template. Then copy 
+android_build_src_main_AndroidManifest.xml to android/build/src/main/AndroidManifest.xml.

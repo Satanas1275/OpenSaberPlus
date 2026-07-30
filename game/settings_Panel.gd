@@ -174,7 +174,7 @@ func _on_show_debug_toggled(button_pressed: bool) -> void:
 
 func _on_mixed_reality_toggled(button_pressed: bool) -> void:
 	Settings.mixed_reality = button_pressed
-	MixedReality.set_mixed_reality(Settings.mixed_realitycon)
+	MixedReality.set_mixed_reality(Settings.mixed_reality)
 
 func _on_explain_toggled(button_pressed: bool) -> void:
 	Settings.explain = button_pressed
