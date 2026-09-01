@@ -93,18 +93,24 @@ static func new_v4(info_dict: Dictionary, load_path: String) -> MapInfo:
 	var song_dict := Utils.get_dict(info_dict, "song", {})
 	var audio_dict := Utils.get_dict(info_dict, "audio", {})
 	
+	# "environmentNames" is an ordered list; take the first (most preferable).
+	var env_names := Utils.get_array(info_dict, "environmentNames", [])
+	var environment_name := ""
+	if not env_names.is_empty():
+		environment_name = str(env_names[0])
+	
 	return MapInfo.new(
 		Utils.get_str(info_dict, "version", "4.0.0"),
 		Utils.get_str(song_dict, "title", ""),
 		Utils.get_str(song_dict, "subTitle", ""),
 		Utils.get_str(song_dict, "author", ""),
 		", ".join(level_mappers),
-		Utils.get_float(audio_dict, "bmp", 60.0),
+		Utils.get_float(audio_dict, "bpm", 60.0),
 		Utils.get_float(audio_dict, "previewStartTime", 0.0),
 		Utils.get_float(audio_dict, "previewDuration", 0.0),
 		Utils.get_str(audio_dict, "songFilename", ""),
 		Utils.get_str(info_dict, "coverImageFilename", ""),
-		"", # TODO: environmentNames
+		environment_name,
 		0.0, # song time offset not supported in v4
 		Utils.get_dict(info_dict, "customData", {}), # TODO: should this be there?
 		load_path,

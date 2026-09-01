@@ -39,6 +39,31 @@ static func get_dict(dict: Dictionary, key: String, default: Dictionary, platfor
 	if OS.get_name() in platform_defaults.keys():
 		return platform_defaults[OS.get_name()]
 	return default
+
+# JSON only knows "numbers", so values may land either as int or float
+# depending on the parser.  These variants accept both (and booleans, which
+# some Chroma maps use for flags like "fake").
+static func get_number(dict: Dictionary, key: String, default: float) -> float:
+	if dict.has(key):
+		var value: Variant = dict[key]
+		if value is float:
+			return value
+		elif value is int:
+			return float(value)
+		elif value is bool:
+			return 1.0 if value else 0.0
+	return default
+
+static func get_int(dict: Dictionary, key: String, default: int) -> int:
+	if dict.has(key):
+		var value: Variant = dict[key]
+		if value is int:
+			return value
+		elif value is float:
+			return int(value)
+		elif value is bool:
+			return 1 if value else 0
+	return default
 	
 static func ends_in(name: String, exts: Array) -> bool:
 	for ext in exts:

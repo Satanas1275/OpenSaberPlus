@@ -87,6 +87,7 @@ func start_map(info: MapInfo, map_difficulty: DifficultyInfo) -> void:
 	update_left_color(Map.color_left)
 	update_right_color(Map.color_right)
 	event_driver.set_background()
+	event_driver.apply_map_custom_tracks()
 	
 	if Map.event_stack.is_empty():
 		event_driver.set_all_on(Map.color_left, Map.color_right)

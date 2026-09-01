@@ -5,6 +5,9 @@ var ring_rot_speed := 0.0
 var ring_rot_inv_dir := false
 var rings_in := false
 
+# multiplier applied to light colours when colour boost is active
+var _boost_mult := 1.0
+
 var left_color: Color
 var right_color: Color
 
@@ -138,12 +141,47 @@ func set_background() -> void:
 func _process(delta: float) -> void:
 	# update the level animations
 	#procces ring rotations
-	if ring_rot_speed > 0:
+	if ring_rot_speed != 0.0:
 		for ring in ring_holder.get_children():
 			if ring is Node3D:
 				var rot := ring_rot_speed
 				if ring_rot_inv_dir: rot *= -1
 				(ring as Node3D).rotate_z((rot * delta) * (float(ring.get_index()+1)/5))
+
+# apply Noodle "AnimateTrack" custom events that target nodes that exist in
+# our level (e.g. moving the SquareLasers holder).  Tracks we don't have are
+# ignored, matching maps (like Planet tracks in Aurora maps) do nothing.
+func apply_map_custom_tracks() -> void:
+	if Map.custom_tracks.is_empty() or disabled:
+		return
+	for track_name: String in Map.custom_tracks:
+		var node := _find_level_node(track_name)
+		if node == null:
+			continue
+		var entries: Array = Map.custom_tracks[track_name]
+		if entries.is_empty():
+			continue
+		# apply the settled (last) keyframe of the final track event
+		var entry := entries[entries.size() - 1] as Dictionary
+		var animation := entry.get("animation", {}) as Dictionary
+		node.position = _anim_end_value(animation, "offsetPosition", Vector3.ZERO)
+		node.rotation_degrees = _anim_end_value(animation, "localRotation", Vector3.ZERO)
+		node.scale = _anim_end_value(animation, "scale", node.scale)
+
+func _find_level_node(track_name: String) -> Node3D:
+	var level := $Level as Node3D
+	for child in level.get_children():
+		if child is Node3D and child.name.to_lower() == track_name.to_lower():
+			return child as Node3D
+	return null
+
+func _anim_end_value(animation: Dictionary, key: String, default_value: Vector3) -> Vector3:
+	var frames: Variant = animation.get(key)
+	if frames is Array and not (frames as Array).is_empty():
+		var last: Variant = (frames as Array)[(frames as Array).size() - 1]
+		if last is Array and (last as Array).size() >= 3:
+			return Vector3(float(last[0]), float(last[1]), float(last[2]))
+	return default_value
 
 func update_left_color(color: Color) -> void:
 	left_color = color
@@ -177,32 +215,69 @@ func process_event(data: EventInfo) -> void:
 		match data.value:
 			EventInfo.VALUE_LIGHTS_OFF:
 				turn_light_off(data.type)
+				return
+		var color: Color
+		match data.value:
 			EventInfo.VALUE_LIGHTS_RIGHT_ON:
-				turn_light_on(data.type, right_color)
+				color = right_color
 			EventInfo.VALUE_LIGHTS_RIGHT_FLASH:
-				flash_light_on(data.type, right_color)
+				color = right_color
 			EventInfo.VALUE_LIGHTS_RIGHT_FADE:
-				flash_light_then_fade_off(data.type, right_color)
+				color = right_color
 			EventInfo.VALUE_LIGHTS_FADE_TO_RIGHT:
-				fade_light_from_current(data.type, right_color)
+				color = right_color
 			EventInfo.VALUE_LIGHTS_LEFT_ON:
-				turn_light_on(data.type, left_color)
+				color = left_color
 			EventInfo.VALUE_LIGHTS_LEFT_FLASH:
-				flash_light_on(data.type, left_color)
+				color = left_color
 			EventInfo.VALUE_LIGHTS_LEFT_FADE:
-				flash_light_then_fade_off(data.type, left_color)
+				color = left_color
 			EventInfo.VALUE_LIGHTS_FADE_TO_LEFT:
-				fade_light_from_current(data.type, left_color)
+				color = left_color
 			EventInfo.VALUE_LIGHTS_WHITE_ON:
-				turn_light_on(data.type, Color.WHITE)
+				color = Color.WHITE
 			EventInfo.VALUE_LIGHTS_WHITE_FLASH:
-				flash_light_on(data.type, Color.WHITE)
+				color = Color.WHITE
 			EventInfo.VALUE_LIGHTS_WHITE_FADE:
-				flash_light_then_fade_off(data.type, Color.WHITE)
+				color = Color.WHITE
 			EventInfo.VALUE_LIGHTS_FADE_TO_WHITE:
-				fade_light_from_current(data.type, Color.WHITE)
+				color = Color.WHITE
+		if _boost_mult != 1.0:
+			color = color * _boost_mult
+		# brightness from v3/v4 light colour events lives in float_value
+		if data.float_value > 0.0:
+			color = color * data.float_value
+		match data.value:
+			EventInfo.VALUE_LIGHTS_RIGHT_ON:
+				turn_light_on(data.type, color)
+			EventInfo.VALUE_LIGHTS_RIGHT_FLASH:
+				flash_light_on(data.type, color)
+			EventInfo.VALUE_LIGHTS_RIGHT_FADE:
+				flash_light_then_fade_off(data.type, color)
+			EventInfo.VALUE_LIGHTS_FADE_TO_RIGHT:
+				fade_light_from_current(data.type, color)
+			EventInfo.VALUE_LIGHTS_LEFT_ON:
+				turn_light_on(data.type, color)
+			EventInfo.VALUE_LIGHTS_LEFT_FLASH:
+				flash_light_on(data.type, color)
+			EventInfo.VALUE_LIGHTS_LEFT_FADE:
+				flash_light_then_fade_off(data.type, color)
+			EventInfo.VALUE_LIGHTS_FADE_TO_LEFT:
+				fade_light_from_current(data.type, color)
+			EventInfo.VALUE_LIGHTS_WHITE_ON:
+				turn_light_on(data.type, color)
+			EventInfo.VALUE_LIGHTS_WHITE_FLASH:
+				flash_light_on(data.type, color)
+			EventInfo.VALUE_LIGHTS_WHITE_FADE:
+				flash_light_then_fade_off(data.type, color)
+			EventInfo.VALUE_LIGHTS_FADE_TO_WHITE:
+				fade_light_from_current(data.type, color)
 	else:
 		match data.type:
+			EventInfo.TYPE_RING_SPIN:
+				ring_rot_speed = data.float_value
+			EventInfo.TYPE_COLOR_BOOST:
+				_boost_mult = 1.6 if data.value > 0 else 1.0
 			8:
 				var ringtween := ring_holder.create_tween()
 				if absf(ring_rot_speed) < 1.0:

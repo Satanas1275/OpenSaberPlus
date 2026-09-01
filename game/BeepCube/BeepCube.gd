@@ -13,6 +13,28 @@ signal cutted(correct_saber: bool)
 var which_saber: int
 var is_dot: bool
 
+# the note info is kept around so the per-note Noodle animation can be
+# applied each physics frame while the cube is flying towards the player
+var note_info: ColorNoteInfo
+
+# previous animation frame values, so we can incrementally adjust the node
+var _anim_last_pos := Vector3.ZERO
+var _anim_last_rot := Vector3.ZERO
+var _anim_base_scale := Vector3.ONE
+
+# base forward flight direction, captured at spawn (before Noodle animation
+# mutates the rotation). Noodle spinning notes rotate their visual orientation
+# but must keep flying along the base lane axis toward the player.
+var _forward := Vector3.FORWARD
+# base orientation basis at spawn, used to apply Noodle offsetPosition in the
+# note's own (un-spun) coordinate space.
+var _anim_base_basis := Basis()
+# distance travelled along _forward from spawn to the hit plane, used to drive
+# the Noodle animation progress from the actual flight position.
+var _spawn_dist := 1.0
+# base flight distance covered so far (excluding the Noodle animation offset).
+var _base_travelled := 0.0
+
 # we store the mesh here as part of the BeepCube for easier access because we will
 # reuse it when we create the cut cube pieces
 var _mesh: Mesh
@@ -42,8 +64,21 @@ func spawn(note_info: ColorNoteInfo, current_beat: float) -> void:
 	# can behave weirdly (ex. AnimationPlayer won't always play correctly)
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	
-	var color := Map.color_left if note_info.color == 0 else Map.color_right
-	speed = Constants.BEAT_DISTANCE * Map.current_info.beats_per_minute * 0.016666666666666667
+	self.note_info = note_info
+	_anim_last_pos = Vector3.ZERO
+	_anim_last_rot = Vector3.ZERO
+	
+	var color := note_info.custom_color if note_info.has_custom_color \
+			else (Map.color_left if note_info.color == 0 else Map.color_right)
+	var njs := 0.0
+	if note_info.note_speed > 0.0:
+		njs = note_info.note_speed
+	else:
+		njs = Map.current_difficulty.note_jump_movement_speed
+	var default_njs := Map.current_difficulty.note_jump_movement_speed
+	if default_njs <= 0.0:
+		default_njs = 9.0
+	speed = Constants.BEAT_DISTANCE * Map.current_info.beats_per_minute * 0.016666666666666667 * (njs / default_njs)
 	beat = note_info.beat
 	which_saber = note_info.color
 	is_dot = note_info.cut_angle >= Constants.DIRECTION8_COMPARE
@@ -52,15 +87,44 @@ func spawn(note_info: ColorNoteInfo, current_beat: float) -> void:
 		(collision_big.shape as BoxShape3D).size.y = 0.8
 	else:
 		(collision_big.shape as BoxShape3D).size.y = 0.5
-		
+	
 	scale = Vector3(Settings.block_size/100.,Settings.block_size/100.,Settings.block_size/100.)
-	transform.origin.x = Settings.LANE_DISTANCE_X * float(note_info.line_index) + Settings.LANE_ZERO_X
-	transform.origin.y = Constants.LANE_DISTANCE_Y * float(note_info.line_layer) + Constants.LAYER_ZERO_Y
+	_anim_base_scale = scale
+	if note_info.has_custom_scale:
+		scale *= note_info.spawn_scale
+		_anim_base_scale = scale
+	
+	# "fake" notes are invisible and don't collide; they exist for visuals only
+	if note_info.fake:
+		mi.visible = false
+		set_collision_disabled(true)
+		return
+	
+	var pos := note_info.custom_position if note_info.has_custom_position \
+			else Vector2(note_info.line_index, note_info.line_layer)
+	transform.origin.x = Settings.LANE_DISTANCE_X * pos.x + Settings.LANE_ZERO_X
+	transform.origin.y = Constants.LANE_DISTANCE_Y * pos.y + Constants.LAYER_ZERO_Y
 	transform.origin.z = -(note_info.beat - current_beat) * Constants.BEAT_DISTANCE
+	# per-note noteJumpStartBeatOffset shifts how late the note arrives
+	transform.origin.z -= note_info.start_beat_offset * Constants.BEAT_DISTANCE
 	
 	add_lane_rotation(note_info.rotation)
 	
 	rotation.z = note_info.cut_angle
+	
+	# capture the flight direction from the base (un-animated) orientation
+	_forward = transform.basis.orthonormalized().z
+	_anim_base_basis = transform.basis.orthonormalized()
+	_spawn_dist = maxf(-transform.origin.dot(_forward), 0.001)
+	_base_travelled = 0.0
+	
+	# when the note has an extra spawn distance (noteJumpStartBeatOffset), it must
+	# still reach the cut plane exactly at its beat: boost the flight speed so the
+	# extra distance is covered within the remaining beats.
+	if absf(note_info.start_beat_offset) > 0.001:
+		var beats_to_hit := maxf(note_info.beat - current_beat, 0.001)
+		var needed := _spawn_dist / (beats_to_hit * 60.0 / Map.current_info.beats_per_minute)
+		speed = maxf(speed, needed)
 	
 	piece_left.set_color(color, is_dot)
 	piece_right.set_color(color, is_dot)
@@ -92,10 +156,52 @@ func spawn(note_info: ColorNoteInfo, current_beat: float) -> void:
 	var anim := $AnimationPlayer as AnimationPlayer
 	var anim_speed := Map.current_difficulty.note_jump_movement_speed / 9.0
 	anim.speed_scale = maxf(min_speed,anim_speed)
-	anim.play(&"Spawn")
+	if not note_info.disable_spawn_effect:
+		anim.play(&"Spawn")
 	
 	slice_particles.reset()
 	mi.visible = true
+
+func _physics_process(delta: float) -> void:
+	# replicate Cuttable._physics_process so we can layer the Noodle animation
+	# offsets on top of the travelled base position
+	if Scoreboard.paused or not is_visible_in_tree() or not Map.current_info: return
+	
+	transform.origin += speed * delta * _forward
+	_base_travelled += speed * delta
+	var rz := global_transform.origin.dot(_forward)
+	
+	# fake notes are invisible and pass through everything
+	if note_info != null and note_info.fake:
+		return
+	
+	if rz > -3.0:
+		set_collision_disabled(false)
+	if rz > Constants.MISS_Z:
+		on_miss()
+	
+	if note_info == null or not note_info.has_animation:
+		return
+	# flight progress driven by the note's base travel along its direction:
+	# 1 at spawn, 0 at the hit plane (the plane the player cuts on). The Noodle
+	# animation offset is excluded so it doesn't skew the timing.
+	var progress := clampf(1.0 - _base_travelled / _spawn_dist, 0.0, 1.0)
+	# animation settles once `progress` has covered the last keyframe's duration
+	var t_pos := clampf((1.0 - progress) / note_info.animation_position_duration, 0.0, 1.0)
+	var t_rot := clampf((1.0 - progress) / note_info.animation_rotation_duration, 0.0, 1.0)
+	var t_scl := clampf((1.0 - progress) / note_info.animation_scale_duration, 0.0, 1.0)
+	var pos := note_info.animation_position.lerp(note_info.animation_position_to, t_pos)
+	var rot := note_info.animation_rotation.lerp(note_info.animation_rotation_to, t_rot)
+	var scl := note_info.animation_scale.lerp(note_info.animation_scale_to, t_scl)
+	
+	transform.origin += _anim_base_basis * (pos - _anim_last_pos)
+	rotation.x += deg_to_rad(rot.x - _anim_last_rot.x)
+	rotation.y += deg_to_rad(rot.y - _anim_last_rot.y)
+	rotation.z += deg_to_rad(rot.z - _anim_last_rot.z)
+	scale = _anim_base_scale * scl
+	
+	_anim_last_pos = pos
+	_anim_last_rot = rot
 
 # call this when clearing the track
 func clear_from_track() -> void:

@@ -5,6 +5,7 @@ var difficulty: String
 var difficulty_rank: int
 var characteristic: String
 var beatmap_filename: String
+var lightshow_data_filename: String
 var note_jump_movement_speed: float
 var note_jump_start_beat_offset: float
 var custom_data: Dictionary
@@ -14,11 +15,13 @@ var custom_name: String
 func _init(
 	difficulty: String, difficulty_rank: int, beatmap_filename: String,
 	note_jump_movement_speed: float, note_jump_start_beat_offset: float,
-	custom_data: Dictionary, custom_name: String, characteristic: String
+	custom_data: Dictionary, custom_name: String, characteristic: String,
+	lightshow_data_filename: String = ""
 ) -> void:
 	self.difficulty = difficulty
 	self.difficulty_rank = difficulty_rank
 	self.beatmap_filename = beatmap_filename
+	self.lightshow_data_filename = lightshow_data_filename
 	self.note_jump_movement_speed = note_jump_movement_speed
 	self.note_jump_start_beat_offset = note_jump_start_beat_offset
 	self.custom_data = custom_data
@@ -78,5 +81,6 @@ static func load_v4(diff_dict: Dictionary) -> DifficultyInfo:
 		Utils.get_float(diff_dict, "noteJumpStartBeatOffset", 0.0),
 		data,
 		name,
-		Utils.get_str(diff_dict, "characteristic", "")
+		Utils.get_str(diff_dict, "characteristic", ""),
+		Utils.get_str(diff_dict, "lightshowDataFilename", "")
 	)

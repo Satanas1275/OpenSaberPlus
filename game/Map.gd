@@ -40,6 +40,16 @@ static var color_right: Color :
 static var last_beat := 0.
 static var one_saber := false
 
+# BPM change sections as sorted [beat, bpm] pairs (v2 _BPMChanges / v3 bpmEvents)
+static var bpm_changes: Array = []
+
+# track name -> array of AnimateTrack entries parsed from custom events
+static var custom_tracks: Dictionary = {}
+# environment customData (Chroma 2D env, Noodle env configs...) as-is
+static var map_environment: Variant = null
+# Vivify fx events collection as-is (maps/f_events bundles we can't render)
+static var fx_events_collection: Dictionary = {}
+
 const ROTATIONS_V2 := [ -60., -45., -30., -15., 15., 30., 45., 60. ]
 const ROTATE_ALL := 0. # for testing
 
@@ -439,6 +449,188 @@ static func load_event_stack_v3(event_data: Array) -> void:
 	load_range.bind(midpoint, event_data.size()).call()
 	Utils.custom_thread_wait_to_finish(event_thread_1)
 	
+static func _compare_event_info(a: EventInfo, b: EventInfo) -> bool:
+	return a.beat < b.beat
+
+# event_stack is consumed with pop_back(), so index 0 must hold the latest
+# event and the last index the earliest one.  Assumes `events` to be sorted.
+static func build_event_stack(events: Array[EventInfo]) -> void:
+	events.sort_custom(_compare_event_info)
+	event_stack.resize(events.size())
+	var i := events.size() - 1
+	for e in events:
+		event_stack[i] = e
+		i -= 1
+
+# v3 beatmap: basic events plus colour boost and per-object GLS lighting
+# (lightColor/lightRotation event box groups), combined and sorted.
+static func load_event_stack_v3_full(map_data: Dictionary) -> void:
+	var events: Array[EventInfo] = []
+	for raw: Variant in Utils.get_array(map_data, "basicBeatmapEvents", []):
+		if raw is Dictionary:
+			events.append(EventInfo.new_v3(raw))
+	for raw: Variant in Utils.get_array(map_data, "colorBoostBeatmapEvents", []):
+		if raw is Dictionary:
+			var boosted := false
+			if raw.has("o"):
+				boosted = _as_bool(raw["o"], false) # v3 maps use a boolean
+			events.append(EventInfo.new_color_boost(
+				Utils.get_float(raw, "b", 0.0),
+				boosted
+			))
+	events.append_array(flatten_light_color_boxes(Utils.get_array(map_data, "lightColorEventBoxGroups", [])))
+	events.append_array(flatten_light_rotation_boxes(Utils.get_array(map_data, "lightRotationEventBoxGroups", [])))
+	build_event_stack(events)
+
+# v4 lightshows: basic events + colour boost events from the shared lightshow
+# file (indexed data arrays).
+static func load_event_stack_v4_lightshow(lightshow: Dictionary) -> void:
+	var events := EventInfo.new_v4_lightshow(
+		Utils.get_array(lightshow, "basicEvents", []),
+		Utils.get_array(lightshow, "basicEventsData", [])
+	)
+	var boosts := Utils.get_array(lightshow, "colorBoostEvents", [])
+	var boost_data := Utils.get_array(lightshow, "colorBoostEventsData", [])
+	for raw: Variant in boosts:
+		if raw is not Dictionary:
+			continue
+		var e := raw as Dictionary
+		var index := int(Utils.get_float(e, "i", 0))
+		var boosted := false
+		if 0 <= index and index < boost_data.size() and boost_data[index] is Dictionary:
+			var bd := boost_data[index] as Dictionary
+			if bd.has("b"):
+				boosted = _as_bool(bd["b"], false) # v4 lightshows use a number
+		events.append(EventInfo.new_color_boost(Utils.get_float(e, "b", 0.0), boosted))
+	if events.is_empty():
+		event_stack.clear()
+	else:
+		build_event_stack(events)
+
+# json values for booleans may come through as real bools or as 0/1 numbers
+static func _as_bool(value: Variant, default_value: bool) -> bool:
+	if value is bool:
+		return value
+	elif value is float or value is int:
+		return float(value) > 0.5
+	return default_value
+
+# Turn v3/v4 LightColorEventBoxGroups into classic light-type events.  The
+# engine only has five light "types" (0-4), so the GLS group id decides which
+# one gets lit.  Brightness is carried in float_value.
+static func flatten_light_color_boxes(groups: Array) -> Array[EventInfo]:
+	var infos: Array[EventInfo] = []
+	for group: Variant in groups:
+		if group is not Dictionary:
+			continue
+		var g := group as Dictionary
+		var base_beat := Utils.get_float(g, "b", 0.0)
+		var light_type := int(Utils.get_float(g, "g", 0)) % 5
+		for box: Variant in Utils.get_array(g, "e", []):
+			if box is not Dictionary:
+				continue
+			for raw: Variant in Utils.get_array(box, "e", []):
+				if raw is not Dictionary:
+					continue
+				var e := raw as Dictionary
+				var value := EventInfo.light_color_event_value(
+					int(Utils.get_float(e, "c", -1)),
+					int(Utils.get_float(e, "i", 0)),
+					Utils.get_float(e, "f", 0.0),
+					Utils.get_float(e, "sb", 0.0)
+				)
+				if value < 0:
+					continue
+				var brightness := Utils.get_float(e, "s", 1.0)
+				if brightness <= 0.0:
+					value = EventInfo.VALUE_LIGHTS_OFF
+					brightness = 1.0
+				infos.append(EventInfo.new(base_beat + Utils.get_float(e, "b", 0.0), light_type, value, brightness))
+	return infos
+
+# Turn v3/v4 LightRotationEventBoxGroups into ring spin events.  The engine
+# has a single ring-rotation channel, so any rotation axis is folded into it;
+# chroma maps use all axis values (0-2) for their ring waggles.  The rotation
+# value is used as an angular speed (360 degrees => 3 rad/s via r/120).
+static func flatten_light_rotation_boxes(groups: Array) -> Array[EventInfo]:
+	var infos: Array[EventInfo] = []
+	for group: Variant in groups:
+		if group is not Dictionary:
+			continue
+		var g := group as Dictionary
+		var base_beat := Utils.get_float(g, "b", 0.0)
+		for box: Variant in Utils.get_array(g, "e", []):
+			if box is not Dictionary:
+				continue
+			var bx := box as Dictionary
+			for raw: Variant in Utils.get_array(bx, "l", []):
+				if raw is not Dictionary:
+					continue
+				var e := raw as Dictionary
+				var rotation := Utils.get_float(e, "r", 0.0)
+				var speed := rotation / 120.0
+				infos.append(EventInfo.new(base_beat + Utils.get_float(e, "b", 0.0), EventInfo.TYPE_RING_SPIN, 0, speed))
+	return infos
+
+# store BPM change sections.  time_key/bpm_key depend on the version
+# (v2: _time/_BPM, v3/v4: b/m).
+static func parse_bpm_changes(events: Array, time_key: String, bpm_key: String) -> void:
+	bpm_changes = []
+	for raw: Variant in events:
+		if raw is Dictionary:
+			bpm_changes.append([
+				Utils.get_float(raw, time_key, 0.0),
+				Utils.get_float(raw, bpm_key, current_info.beats_per_minute)
+			])
+	bpm_changes.sort_custom(compare_times)
+	if not bpm_changes.is_empty() and bpm_changes[0][0] <= 0.0:
+		current_info.beats_per_minute = bpm_changes[0][1] * Settings.music_speed / 100.
+
+# Noodle Extensions / Chroma custom events and environment data.  We can't
+# render arbitrary custom environments or Fx events, but we surface them so
+# they never break map loading and AnimateTrack can be applied to our own
+# level nodes.
+static func parse_custom_events(map_data: Dictionary, v2: bool) -> void:
+	custom_tracks = {}
+	map_environment = null
+	fx_events_collection = Utils.get_dict(map_data, "_fxEventsCollection", {})
+	
+	var custom_data := Utils.get_dict(map_data, "_customData" if v2 else "customData", {})
+	if v2:
+		map_environment = custom_data.get("_customEnvironment")
+		if map_environment == null and current_info != null:
+			map_environment = current_info.custom_data.get("_customEnvironment")
+	else:
+		map_environment = custom_data.get("environment")
+	
+	var event_data: Array
+	if v2:
+		event_data = Utils.get_array(map_data, "_customEvents", [])
+	else:
+		event_data = Utils.get_array(custom_data, "customEvents", [])
+		if event_data.is_empty():
+			event_data = Utils.get_array(map_data, "customEvents", [])
+	
+	for raw: Variant in event_data:
+		if raw is not Dictionary:
+			continue
+		var e := raw as Dictionary
+		var ev_type := Utils.get_str(e, "_type" if v2 else "t", "")
+		if ev_type.is_empty():
+			ev_type = Utils.get_str(e, "type", "")
+		if ev_type != "AnimateTrack":
+			continue
+		var data := Utils.get_dict(e, "_data" if v2 else "d", {})
+		var track_name := Utils.get_str(data, "_track" if v2 else "track", "")
+		if track_name.is_empty():
+			continue
+		var track_list: Array = custom_tracks.get(track_name, [])
+		track_list.append({
+			"beat": Utils.get_float(e, "_time" if v2 else "b", 0.0),
+			"animation": Utils.get_dict(data, "_animation" if v2 else "animation", {})
+		})
+		custom_tracks[track_name] = track_list
+	
 static func get_last_beat() -> void:
 	current_info.last_beat = 0.
 	for note_info in note_stack:
@@ -519,10 +711,12 @@ static func load_beatmap(info: MapInfo, difficulty: DifficultyInfo, map_data: Di
 		current_difficulty = difficulty
 		one_saber = difficulty.characteristic == "OneSaber"
 		Map.set_colors_from_custom_data()
+		parse_custom_events(map_data, true)
 		Utils.custom_thread_wait_to_finish(note_thread_0)
 		Utils.custom_thread_wait_to_finish(obstacle_thread_0)
 		Utils.custom_thread_wait_to_finish(event_thread_0)
 		Utils.custom_thread_wait_to_finish(arc_thread_0)
+		parse_bpm_changes(Utils.get_array(map_data, "_BPMChanges", []), "_time", "_BPM")
 		get_last_beat()
 		return true
 	elif map_data.has("version"):
@@ -569,21 +763,31 @@ static func load_beatmap(info: MapInfo, difficulty: DifficultyInfo, map_data: Di
 					[Utils.get_array(map_data, "burstSliders", []),
 					rotations
 					])
+			# v4 maps split lighting out into a separate lightshow file
+			var lightshow := {}
+			if v4 and not difficulty.lightshow_data_filename.is_empty():
+				lightshow = Utils.binary_to_json(
+					Utils.read_binary_file(info.filepath, difficulty.lightshow_data_filename))
 			if v4:
-				pass #TODO
+				Utils.custom_thread_call(event_thread_0, load_event_stack_v4_lightshow, [lightshow])
 			else:
-				Utils.custom_thread_call(event_thread_0, load_event_stack_v3, [Utils.get_array(map_data, "basicBeatmapEvents", [])])
+				Utils.custom_thread_call(event_thread_0, load_event_stack_v3_full, [map_data])
 			current_info = info
 			current_info.beats_per_minute *= Settings.music_speed / 100.
 			current_difficulty = difficulty
 			one_saber = difficulty.characteristic == "OneSaber"
 			Map.set_colors_from_custom_data()
+			parse_custom_events(map_data, false)
 			Utils.custom_thread_wait_to_finish(note_thread_0)
 			Utils.custom_thread_wait_to_finish(bomb_thread_0)
 			Utils.custom_thread_wait_to_finish(obstacle_thread_0)
 			Utils.custom_thread_wait_to_finish(arc_thread_0)
 			Utils.custom_thread_wait_to_finish(chain_thread_0)
 			Utils.custom_thread_wait_to_finish(event_thread_0)
+			if v4:
+				parse_bpm_changes(Utils.get_array(lightshow, "bpmEvents", []), "b", "m")
+			else:
+				parse_bpm_changes(Utils.get_array(map_data, "bpmEvents", []), "b", "m")
 			get_last_beat()
 			return true
 	vr.log_warning("selected map is an unsupported version")
