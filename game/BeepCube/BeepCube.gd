@@ -189,7 +189,12 @@ func _physics_process(delta: float) -> void:
 	var pos := _anim_state(note_info.animation_position_frames, flight01, Vector3.ZERO)
 	var rot := _anim_state(note_info.animation_rotation_frames, flight01, Vector3.ZERO)
 	var scl := _anim_state(note_info.animation_scale_frames, flight01, Vector3.ONE)
-	
+
+	const MIN_SCALE_COMPONENT := 0.001
+	scl.x = maxf(scl.x, MIN_SCALE_COMPONENT)
+	scl.y = maxf(scl.y, MIN_SCALE_COMPONENT)
+	scl.z = maxf(scl.z, MIN_SCALE_COMPONENT)
+
 	transform.origin += _anim_base_basis * (pos - _anim_last_pos)
 	rotation.x += deg_to_rad(rot.x - _anim_last_rot.x)
 	rotation.y += deg_to_rad(rot.y - _anim_last_rot.y)
