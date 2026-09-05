@@ -23,20 +23,14 @@ var start_beat_offset := 0.0 # per-note noteJumpStartBeatOffset override
 var fake := false
 var disable_spawn_effect := false
 
-# Noodle animation, as two keyframes (spawn value -> settled value)
-var animation_position := Vector3.ZERO
-var animation_position_to := Vector3.ZERO
-var animation_rotation := Vector3.ZERO
-var animation_rotation_to := Vector3.ZERO
-var animation_scale := Vector3.ONE
-var animation_scale_to := Vector3.ONE
+# Noodle animation as keyframe lists. Each entry is a dictionary
+# { "v": Vector3, "t": float, "e": String } where "t" is a fraction of the
+# note flight (0 = spawn, 1 = hit plane) and "e" the easing curve name applied
+# over the segment that ends at that keyframe.
+var animation_position_frames: Array = []
+var animation_rotation_frames: Array = []
+var animation_scale_frames: Array = []
 var has_animation := false
-
-# last keyframe time of each animation, in fractions of the note jump.
-# The animation holds its final value once this fraction of the flight is over.
-var animation_position_duration := 1.0
-var animation_rotation_duration := 1.0
-var animation_scale_duration := 1.0
 
 @warning_ignore("shadowed_variable")
 func _init(beat: float, line_index: float, line_layer: float, color: int, cut_angle: float, rotation_degrees: float) -> void:
@@ -108,17 +102,11 @@ func parse_custom_data(custom_data: Dictionary, v2: bool) -> void:
 	if animation_v is Dictionary:
 		var ad := animation_v as Dictionary
 		var anim_prefix := "_" if v2 else ""
-		animation_position = _anim_frame(ad.get(anim_prefix + "offsetPosition"), Vector3.ZERO)
-		animation_position_to = _anim_last_frame(ad.get(anim_prefix + "offsetPosition"), Vector3.ZERO)
-		animation_rotation = _anim_frame(ad.get(anim_prefix + "localRotation"), Vector3.ZERO)
-		animation_rotation_to = _anim_last_frame(ad.get(anim_prefix + "localRotation"), Vector3.ZERO)
-		animation_scale = _anim_frame(ad.get(anim_prefix + "scale"), Vector3.ONE)
-		animation_scale_to = _anim_last_frame(ad.get(anim_prefix + "scale"), Vector3.ONE)
-		animation_position_duration = _anim_frame_duration(ad.get(anim_prefix + "offsetPosition"))
-		animation_rotation_duration = _anim_frame_duration(ad.get(anim_prefix + "localRotation"))
-		animation_scale_duration = _anim_frame_duration(ad.get(anim_prefix + "scale"))
-		if animation_position != Vector3.ZERO or animation_rotation != Vector3.ZERO \
-				or animation_scale != Vector3.ONE:
+		animation_position_frames = _anim_frames(ad.get(anim_prefix + "offsetPosition"), Vector3.ZERO, false)
+		animation_rotation_frames = _anim_frames(ad.get(anim_prefix + "localRotation"), Vector3.ZERO, false)
+		animation_scale_frames = _anim_frames(ad.get(anim_prefix + "scale"), Vector3.ONE, true)
+		if not animation_position_frames.is_empty() or not animation_rotation_frames.is_empty() \
+				or not animation_scale_frames.is_empty():
 			has_animation = true
 
 static func _parse_color(color: Variant) -> Color:
@@ -138,25 +126,141 @@ static func _parse_color(color: Variant) -> Color:
 		)
 	return Color.WHITE
 
-static func _anim_frame(frames: Variant, default_value: Vector3) -> Vector3:
-	if frames is Array and not (frames as Array).is_empty():
-		var first: Variant = (frames as Array)[0]
-		if first is Array and (first as Array).size() >= 3:
-			return Vector3(float(first[0]), float(first[1]), float(first[2]))
-	return default_value
+# Standard Beat Saber / Noodle easing curves, evaluated on [0,1].
+static func anim_ease(easing: String, x: float) -> float:
+	var t := clampf(x, 0.0, 1.0)
+	match easing:
+		"easeInQuad": return t * t
+		"easeOutQuad": return t * (2.0 - t)
+		"easeInOutQuad":
+			if t < 0.5: return 2.0 * t * t
+			return -1.0 + (4.0 - 2.0 * t) * t
+		"easeInCubic": return t * t * t
+		"easeOutCubic":
+			var u1 := t - 1.0
+			return u1 * u1 * u1 + 1.0
+		"easeInOutCubic":
+			if t < 0.5: return 4.0 * t * t * t
+			var u2 := 2.0 * t - 2.0
+			return 0.5 * u2 * u2 * u2 + 1.0
+		"easeInQuart": return t * t * t * t
+		"easeOutQuart":
+			var u3 := t - 1.0
+			return 1.0 - u3 * u3 * u3 * u3
+		"easeInOutQuart":
+			if t < 0.5: return 8.0 * t * t * t * t
+			var u4 := t - 1.0
+			return 1.0 - 8.0 * u4 * u4 * u4 * u4
+		"easeInQuint": return t * t * t * t * t
+		"easeOutQuint":
+			var u5 := t - 1.0
+			return 1.0 + u5 * u5 * u5 * u5 * u5
+		"easeInOutQuint":
+			if t < 0.5: return 16.0 * t * t * t * t * t
+			var u6 := 2.0 * t - 2.0
+			return 0.5 * u6 * u6 * u6 * u6 * u6 + 1.0
+		"easeInSine": return 1.0 - cos(t * PI * 0.5)
+		"easeOutSine": return sin(t * PI * 0.5)
+		"easeInOutSine": return -0.5 * (cos(PI * t) - 1.0)
+		"easeInExpo": return 1.0 if t <= 0.0 else pow(2.0, 10.0 * (t - 1.0))
+		"easeOutExpo": return 1.0 if t >= 1.0 else -pow(2.0, -10.0 * t) + 1.0
+		"easeInOutExpo":
+			if t <= 0.0: return 0.0
+			if t >= 1.0: return 1.0
+			if t < 0.5: return 0.5 * pow(2.0, 20.0 * t - 10.0)
+			return -0.5 * pow(2.0, -20.0 * t + 10.0) + 1.0
+		"easeInCirc": return 1.0 - sqrt(1.0 - t * t)
+		"easeOutCirc":
+			var u7 := t - 1.0
+			return sqrt(1.0 - u7 * u7)
+		"easeInOutCirc":
+			if t < 0.5: return 0.5 * (1.0 - sqrt(1.0 - 4.0 * t * t))
+			var u8 := -2.0 * t + 2.0
+			return 0.5 * (sqrt(1.0 - u8 * u8) + 1.0)
+		"easeInBack":
+			var c1 := 1.70158
+			var c3 := c1 + 1.0
+			return c3 * t * t * t - c1 * t * t
+		"easeOutBack":
+			var c4 := 1.70158
+			var c5 := c4 + 1.0
+			var u9 := t - 1.0
+			return 1.0 + c5 * u9 * u9 * u9 + c4 * u9 * u9
+		"easeInOutBack":
+			var c6 := 1.70158
+			var c7 := c6 * 1.525
+			if t < 0.5: return 0.5 * (2.0 * t) * (2.0 * t) * ((c7 + 1.0) * 2.0 * t - c7)
+			var u10 := 2.0 * t - 2.0
+			return 0.5 * (u10 * u10 * ((c7 + 1.0) * u10 + c7) + 2.0)
+		"easeInElastic":
+			if t <= 0.0: return 0.0
+			if t >= 1.0: return 1.0
+			var c8 := 2.0 * PI / 3.0
+			return -pow(2.0, 10.0 * t - 10.0) * sin((t * 10.0 - 10.75) * c8)
+		"easeOutElastic":
+			if t <= 0.0: return 0.0
+			if t >= 1.0: return 1.0
+			var c9 := 2.0 * PI / 3.0
+			return pow(2.0, -10.0 * t) * sin((t * 10.0 - 0.75) * c9) + 1.0
+		"easeInOutElastic":
+			if t <= 0.0: return 0.0
+			if t >= 1.0: return 1.0
+			var c10 := 2.0 * PI / 4.5
+			if t < 0.5:
+				return -0.5 * pow(2.0, 20.0 * t - 10.0) * sin((20.0 * t - 11.125) * c10)
+			return pow(2.0, -20.0 * t + 10.0) * sin((20.0 * t - 11.125) * c10) * 0.5 + 1.0
+		"easeInBounce":
+			return 1.0 - anim_ease("easeOutBounce", 1.0 - t)
+		"easeOutBounce":
+			var n1 := 7.5625
+			var d1 := 2.75
+			if t < 1.0 / d1: return n1 * t * t
+			if t < 2.0 / d1:
+				var u11 := t - 1.5 / d1
+				return n1 * u11 * u11 + 0.75
+			if t < 2.5 / d1:
+				var u12 := t - 2.25 / d1
+				return n1 * u12 * u12 + 0.9375
+			var u13 := t - 2.625 / d1
+			return n1 * u13 * u13 + 0.984375
+		"easeInOutBounce":
+			if t < 0.5: return 0.5 * anim_ease("easeOutBounce", 2.0 * t)
+			return 0.5 * anim_ease("easeOutBounce", 2.0 * t - 1.0) + 0.5
+	return t
 
-static func _anim_frame_duration(frames: Variant) -> float:
-	if frames is Array and not (frames as Array).is_empty():
-		var last: Variant = (frames as Array)[(frames as Array).size() - 1]
-		if last is Array and (last as Array).size() >= 4:
-			var t := float((last as Array)[3])
-			if t > 0.0:
-				return t
-	return 1.0
+# parse a Noodle animation property into a list of keyframe dictionaries.
+# Accepts both keyframe lists [[x,y,z,t?,easing?], ...] and bare values
+# ([x,y,z] or a scalar for scale properties).
+static func _anim_frames(frames: Variant, default_value: Vector3, scalar: bool) -> Array:
+	var result: Array = []
+	if not (frames is Array):
+		return result
+	var arr := frames as Array
+	if arr.is_empty():
+		return result
+	if _is_number(arr[0]):
+		result.append(_frame_from_value(arr, default_value, scalar))
+		return result
+	for raw in arr:
+		result.append(_frame_from_value(raw, default_value, scalar))
+	return result
 
-static func _anim_last_frame(frames: Variant, default_value: Vector3) -> Vector3:
-	if frames is Array and not (frames as Array).is_empty():
-		var last: Variant = (frames as Array)[(frames as Array).size() - 1]
-		if last is Array and (last as Array).size() >= 3:
-			return Vector3(float(last[0]), float(last[1]), float(last[2]))
-	return default_value
+static func _is_number(v: Variant) -> bool:
+	return typeof(v) == TYPE_INT or typeof(v) == TYPE_FLOAT
+
+static func _frame_from_value(raw: Variant, default_value: Vector3, scalar: bool) -> Dictionary:
+	var v := default_value
+	var t := 0.0
+	var e := ""
+	if _is_number(raw):
+		if scalar:
+			v = Vector3(raw, raw, raw)
+	elif raw is Array:
+		var a := raw as Array
+		if a.size() >= 3:
+			v = Vector3(float(a[0]), float(a[1]), float(a[2]))
+		if a.size() >= 4 and _is_number(a[3]):
+			t = float(a[3])
+		if a.size() >= 5 and a[4] is String:
+			e = a[4] as String
+	return { "v": v, "t": t, "e": e }

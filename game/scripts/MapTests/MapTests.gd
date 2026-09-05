@@ -257,8 +257,21 @@ func testcase_color_note_custom_data() -> void:
 	_check(note.start_beat_offset == -1.5, "notes: per-note offset parsed")
 	_check(note.fake, "notes: fake flag parsed")
 	_check(note.has_animation, "notes: animation keyframes parsed")
-	_check(note.animation_position.z == -100.0, "notes: animation spawn offset")
-	_check(note.animation_rotation_to == Vector3.ZERO, "notes: animation settles to zero rotation")
+	var anim_pos: Array = note.animation_position_frames
+	_check(anim_pos.size() >= 2, "notes: animation keyframe list (%d)" % anim_pos.size())
+	if anim_pos.size() >= 2:
+		var first_f: Dictionary = anim_pos[0]
+		var last_f: Dictionary = anim_pos[anim_pos.size() - 1]
+		_check((first_f["v"] as Vector3).z == -100.0, "notes: animation spawn offset")
+		_check(last_f["v"] == Vector3.ZERO, "notes: animation settles to zero position")
+	var rot_frames: Array = note.animation_rotation_frames
+	if rot_frames.size() >= 2:
+		var rot_last: Dictionary = rot_frames[rot_frames.size() - 1]
+		_check(rot_last["v"] == Vector3.ZERO, "notes: animation settles to zero rotation")
+	_check(ColorNoteInfo.anim_ease("easeOutSine", 0.0) == 0.0
+			and ColorNoteInfo.anim_ease("easeOutSine", 1.0) == 1.0, "notes: easing endpoints")
+	_check(is_equal_approx(ColorNoteInfo.anim_ease("easeOutSine", 0.5), sin(0.5 * PI * 0.5)),
+			"notes: easeOutSine sampled")
 
 func testcase_color_note_v2_underscore_keys() -> void:
 	var note := ColorNoteInfo.new_v2({

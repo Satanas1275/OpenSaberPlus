@@ -182,17 +182,13 @@ func _physics_process(delta: float) -> void:
 	
 	if note_info == null or not note_info.has_animation:
 		return
-	# flight progress driven by the note's base travel along its direction:
-	# 1 at spawn, 0 at the hit plane (the plane the player cuts on). The Noodle
+	# flight fraction driven by the note's base travel along its direction:
+	# 0 at spawn, 1 at the hit plane (the plane the player cuts on). The Noodle
 	# animation offset is excluded so it doesn't skew the timing.
-	var progress := clampf(1.0 - _base_travelled / _spawn_dist, 0.0, 1.0)
-	# animation settles once `progress` has covered the last keyframe's duration
-	var t_pos := clampf((1.0 - progress) / note_info.animation_position_duration, 0.0, 1.0)
-	var t_rot := clampf((1.0 - progress) / note_info.animation_rotation_duration, 0.0, 1.0)
-	var t_scl := clampf((1.0 - progress) / note_info.animation_scale_duration, 0.0, 1.0)
-	var pos := note_info.animation_position.lerp(note_info.animation_position_to, t_pos)
-	var rot := note_info.animation_rotation.lerp(note_info.animation_rotation_to, t_rot)
-	var scl := note_info.animation_scale.lerp(note_info.animation_scale_to, t_scl)
+	var flight01 := clampf(_base_travelled / _spawn_dist, 0.0, 1.0)
+	var pos := _anim_state(note_info.animation_position_frames, flight01, Vector3.ZERO)
+	var rot := _anim_state(note_info.animation_rotation_frames, flight01, Vector3.ZERO)
+	var scl := _anim_state(note_info.animation_scale_frames, flight01, Vector3.ONE)
 	
 	transform.origin += _anim_base_basis * (pos - _anim_last_pos)
 	rotation.x += deg_to_rad(rot.x - _anim_last_rot.x)
@@ -202,6 +198,32 @@ func _physics_process(delta: float) -> void:
 	
 	_anim_last_pos = pos
 	_anim_last_rot = rot
+
+# evaluate a Noodle keyframe list at a flight fraction (0 = spawn, 1 = hit plane),
+# interpolating between keyframes with each segment's easing curve.
+static func _anim_state(frames: Array, time: float, default_value: Vector3) -> Vector3:
+	if frames.is_empty():
+		return default_value
+	var t := clampf(time, 0.0, 1.0)
+	var first: Dictionary = frames[0]
+	var last: Dictionary = frames[frames.size() - 1]
+	if t <= float(first["t"]):
+		return first["v"] as Vector3
+	if t >= float(last["t"]):
+		return last["v"] as Vector3
+	for i in range(frames.size() - 1):
+		var a: Dictionary = frames[i]
+		var b: Dictionary = frames[i + 1]
+		var ta := float(a["t"])
+		var tb := float(b["t"])
+		if t >= ta and t <= tb:
+			if tb <= ta:
+				return b["v"] as Vector3
+			var x := clampf((t - ta) / (tb - ta), 0.0, 1.0)
+			var easing := b["e"] as String
+			var ex := ColorNoteInfo.anim_ease(easing, x) if not easing.is_empty() else x
+			return (a["v"] as Vector3).lerp(b["v"] as Vector3, ex)
+	return last["v"] as Vector3
 
 # call this when clearing the track
 func clear_from_track() -> void:
