@@ -169,15 +169,21 @@ func _physics_process(delta: float) -> void:
 	
 	transform.origin += speed * delta * _forward
 	_base_travelled += speed * delta
-	var rz := global_transform.origin.dot(_forward)
+	# base_rz is the note's "real" gameplay position along its flight line,
+	# excluding any decorative Noodle offsetPosition animation. Miss detection
+	# and collision enabling must use this, not the animated global position:
+	# a Noodle effect can visually push the cube far past the hit plane
+	# (e.g. to make it appear to spawn behind the player) without that being
+	# an actual miss - only the timing matters for gameplay.
+	var base_rz := -_spawn_dist + _base_travelled
 	
 	# fake notes are invisible and pass through everything
 	if note_info != null and note_info.fake:
 		return
 	
-	if rz > -3.0:
+	if base_rz > -3.0:
 		set_collision_disabled(false)
-	if rz > Constants.MISS_Z:
+	if base_rz > Constants.MISS_Z:
 		on_miss()
 	
 	if note_info == null or not note_info.has_animation:
@@ -189,12 +195,18 @@ func _physics_process(delta: float) -> void:
 	var pos := _anim_state(note_info.animation_position_frames, flight01, Vector3.ZERO)
 	var rot := _anim_state(note_info.animation_rotation_frames, flight01, Vector3.ZERO)
 	var scl := _anim_state(note_info.animation_scale_frames, flight01, Vector3.ONE)
-
+	# Noodle scale keyframes can legitimately hit (0,0,0) (pop-in effect). A
+	# node scaled to exactly zero has a singular (non-invertible) transform,
+	# and since this node has CollisionShape3D children, Godot's physics/
+	# rendering internals try to invert it anyway, spamming
+	# "Condition det == 0 is true" from Basis::invert(). Clamp to a tiny
+	# epsilon instead of exactly zero - visually identical, keeps the
+	# transform invertible.
 	const MIN_SCALE_COMPONENT := 0.001
 	scl.x = maxf(scl.x, MIN_SCALE_COMPONENT)
 	scl.y = maxf(scl.y, MIN_SCALE_COMPONENT)
 	scl.z = maxf(scl.z, MIN_SCALE_COMPONENT)
-
+	
 	transform.origin += _anim_base_basis * (pos - _anim_last_pos)
 	rotation.x += deg_to_rad(rot.x - _anim_last_rot.x)
 	rotation.y += deg_to_rad(rot.y - _anim_last_rot.y)

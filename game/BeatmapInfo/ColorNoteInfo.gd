@@ -104,11 +104,13 @@ func parse_custom_data(custom_data: Dictionary, v2: bool) -> void:
 		var anim_prefix := "_" if v2 else ""
 		animation_position_frames = _anim_frames(ad.get(anim_prefix + "offsetPosition"), Vector3.ZERO, false)
 		# Noodle Extensions spec: "one unit in offsetPosition is equal to the
-		# width of one lane" (0.6m), uniformly across x/y/z. Without this the
-		# raw JSON numbers get treated as raw Godot meters, which is way off
-		# scale from the rest of the playfield (lanes, beat spacing, etc).
+		# width of one lane" (0.6m), uniformly across x/y/z. z is also negated:
+		# this port's away-from-player axis is -Z (see the "-" in the beat-time
+		# origin.z formula in BeepCube.spawn), flipped vs. Beat Saber/Unity's
+		# convention that Noodle authors against. x/y don't need this flip.
 		for frame in animation_position_frames:
-			frame["v"] = (frame["v"] as Vector3) * Settings.LANE_DISTANCE_X
+			var v := frame["v"] as Vector3
+			frame["v"] = Vector3(v.x, v.y, -v.z) * Settings.LANE_DISTANCE_X
 		animation_rotation_frames = _anim_frames(ad.get(anim_prefix + "localRotation"), Vector3.ZERO, false)
 		animation_scale_frames = _anim_frames(ad.get(anim_prefix + "scale"), Vector3.ONE, true)
 		if not animation_position_frames.is_empty() or not animation_rotation_frames.is_empty() \
